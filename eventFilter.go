@@ -20,6 +20,8 @@ func (f *EventFilter) OnLine(line string) {
 		if !f.isSkippedEvent() {
 			f.Dump()
 		}
+
+		f.lines = nil
 	}
 
 	f.lines = append(f.lines, l)
@@ -30,8 +32,6 @@ func (f *EventFilter) Dump() {
 	for _, el := range f.lines {
 		fmt.Println(el)
 	}
-
-	f.lines = nil
 }
 
 func (f *EventFilter) isSkippedEvent() bool {
