@@ -2,65 +2,36 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"os"
-	"strings"
 )
 
-var eventLines []string
-
 func main() {
-	term := "PD-Slackbot Test"
-
 	scheduleFile, err := openStdinOrFile()
 
 	if err != nil {
 		panic(err)
 	}
 
-	rd := bufio.NewReader(scheduleFile)
+	reader := bufio.NewReader(scheduleFile)
+	filter := EventFilter{SkipIfContains: "PD-Slackbot Test"}
 
 	for {
-		line, err := rd.ReadString('\n')
+		line, err := reader.ReadString('\n')
 
 		if err != nil {
 			if err == io.EOF { // last line may not have a newline
-				onLine(line, term)
+				filter.OnLine(line)
 				break
 			}
 
 			panic(err)
 		}
 
-		onLine(line, term) // any but last line
+		filter.OnLine(line) // any but last line
 	}
 
-	printLines() // remainder
-}
-
-func onLine(line, term string) {
-	l := strings.TrimSpace(line)
-
-	if l == "END:VEVENT" {
-		if !isSkippedEvent(term) {
-			printLines()
-		}
-
-		eventLines = nil
-	}
-
-	eventLines = append(eventLines, l)
-}
-
-func isSkippedEvent(term string) bool {
-	for _, el := range eventLines {
-		if strings.Contains(el, term) {
-			return true
-		}
-	}
-
-	return false
+	filter.Dump() // print the remainder
 }
 
 func openStdinOrFile() (io.Reader, error) {
@@ -76,10 +47,4 @@ func openStdinOrFile() (io.Reader, error) {
 	}
 
 	return reader, nil
-}
-
-func printLines() {
-	for _, el := range eventLines {
-		fmt.Println(el)
-	}
 }
