@@ -2,6 +2,7 @@ package filters
 
 import (
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -9,6 +10,7 @@ import (
 type EventFilter struct {
 	lines          []string
 	SkipIfContains []string
+	Verbose        bool
 }
 
 // OnLine handles a single line in a line-oriented iCal stream
@@ -38,6 +40,9 @@ func (f *EventFilter) isSkippedEvent() bool {
 	for _, el := range f.lines {
 		for _, skip := range f.SkipIfContains {
 			if strings.Contains(el, skip) {
+				if f.Verbose {
+					fmt.Fprintf(os.Stderr, "Skipping event with %s\n", el)
+				}
 				return true
 			}
 		}

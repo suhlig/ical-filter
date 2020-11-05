@@ -18,8 +18,7 @@ var rootCmd = &cobra.Command{
 	RunE:  run,
 	Example: `
   # Fetch the NASA calendar and remove all SpaceX events
-  $ curl https://www.nasa.gov/templateimages/redesign/calendar/iCal/nasa_calendar.ics | ical-filter --skip SpaceX
-`,
+  $ curl https://www.nasa.gov/templateimages/redesign/calendar/iCal/nasa_calendar.ics | ical-filter --skip SpaceX`,
 }
 
 // Execute runs the root command
@@ -31,6 +30,7 @@ func Execute() {
 
 func init() {
 	rootCmd.Flags().StringSliceP("skip", "s", nil, "skip all events containing this string")
+	rootCmd.Flags().BoolP("verbose", "V", false, "verbose output")
 }
 
 func run(cmd *cobra.Command, args []string) error {
@@ -42,6 +42,12 @@ func run(cmd *cobra.Command, args []string) error {
 
 	reader := bufio.NewReader(calendar)
 
+	verbose, err := cmd.Flags().GetBool("verbose")
+
+	if err != nil {
+		return err
+	}
+
 	skips, err := cmd.Flags().GetStringSlice("skip")
 
 	if err != nil {
@@ -50,6 +56,7 @@ func run(cmd *cobra.Command, args []string) error {
 
 	filter := filters.EventFilter{
 		SkipIfContains: skips,
+		Verbose:        verbose,
 	}
 
 	for {
