@@ -1,4 +1,4 @@
-package main
+package filters
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 // EventFilter filters a line-oriented iCal stream
 type EventFilter struct {
 	lines          []string
-	SkipIfContains string
+	SkipIfContains []string
 }
 
 // OnLine handles a single line in a line-oriented iCal stream
@@ -36,8 +36,10 @@ func (f *EventFilter) Dump() {
 
 func (f *EventFilter) isSkippedEvent() bool {
 	for _, el := range f.lines {
-		if strings.Contains(el, f.SkipIfContains) {
-			return true
+		for _, skip := range f.SkipIfContains {
+			if strings.Contains(el, skip) {
+				return true
+			}
 		}
 	}
 
