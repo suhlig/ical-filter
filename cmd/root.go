@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"os"
 
@@ -10,36 +9,43 @@ import (
 	"github.com/suhlig/ical-filter/filters"
 )
 
+var shortDescription = "Reads iCal events, filters them and prints the filtered events. "
+
 var rootCmd = &cobra.Command{
 	Use:   "ical-filter",
-	Short: "Reads iCal events, filters them and prints them out again",
-	Run:   run,
+	Short: shortDescription,
+	Long:  shortDescription + "\n\nA calendar (stream of iCal VEVENTs) is expected on STDIN or as a file name parameter.",
+	RunE:  run,
+	Example: `
+  # Fetch the NASA calendar and remove all SpaceX events
+  $ curl https://www.nasa.gov/templateimages/redesign/calendar/iCal/nasa_calendar.ics | ical-filter --skip SpaceX
+`,
 }
 
+// Execute runs the root command
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
 		os.Exit(1)
 	}
 }
 
 func init() {
-	rootCmd.Flags().StringSliceP("skip", "s", nil, "Help message for toggle")
+	rootCmd.Flags().StringSliceP("skip", "s", nil, "skip all events containing this string")
 }
 
-func run(cmd *cobra.Command, args []string) {
-	scheduleFile, err := stdinOrFileArg(args)
+func run(cmd *cobra.Command, args []string) error {
+	calendar, err := stdinOrFileArg(args)
 
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	reader := bufio.NewReader(scheduleFile)
+	reader := bufio.NewReader(calendar)
 
 	skips, err := cmd.Flags().GetStringSlice("skip")
 
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	filter := filters.EventFilter{
@@ -55,13 +61,15 @@ func run(cmd *cobra.Command, args []string) {
 				break
 			}
 
-			panic(err)
+			return err
 		}
 
 		filter.OnLine(line) // any but last line
 	}
 
 	filter.Dump() // print the remainder
+
+	return nil
 }
 
 func stdinOrFileArg(args []string) (io.Reader, error) {
